@@ -1,4 +1,4 @@
-﻿ticket: TASK-0001
+ticket: TASK-0001
 descricao: "Checklist de conformidade do módulo de Catálogo — gerado a partir das regras de negócio e critérios de aceite da ticket original."
 
 checks:
@@ -33,7 +33,7 @@ checks:
   - id: sem_upload_imagem_gcs
     type: file_absent
     file_pattern: "app/**/*.py"
-    pattern: "storage\.googleapis|Blob\(|upload_from"
+    pattern: "storage\\.googleapis|Blob\\(|upload_from"
     required: true
     description: "Upload de imagem para GCS está FORA DE ESCOPO nesta ticket — se aparecer, é scope creep."
 
