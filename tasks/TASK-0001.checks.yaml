@@ -1,0 +1,65 @@
+﻿ticket: TASK-0001
+descricao: "Checklist de conformidade do módulo de Catálogo — gerado a partir das regras de negócio e critérios de aceite da ticket original."
+
+checks:
+  - id: preco_por_tipo_cliente
+    type: file_contains
+    file_pattern: "app/**/*.py"
+    pattern: "tipo_cliente"
+    required: true
+    description: "Modelo deve ter preço diferenciado por tipo de cliente (B2C/B2B) — regra central do negócio de atacado."
+
+  - id: margem_minima_b2b
+    type: file_contains
+    file_pattern: "app/**/*.py"
+    pattern: "margem_minima_revenda_pct"
+    required: true
+    description: "Campo de margem mínima de revenda B2B deve existir no modelo."
+
+  - id: variacao_com_sku_proprio
+    type: file_contains
+    file_pattern: "app/**/*.py"
+    pattern: "sku_variacao"
+    required: true
+    description: "Cada variação (tamanho/cor) deve ter SKU e estoque próprios, não estoque único no produto."
+
+  - id: endpoint_preco_por_cliente
+    type: file_contains
+    file_pattern: "app/**/*.py"
+    pattern: "/preco"
+    required: true
+    description: "Endpoint GET /produtos/{id}/preco deve existir para o Carrinho (TASK-0002) consultar preço por tipo de cliente."
+
+  - id: sem_upload_imagem_gcs
+    type: file_absent
+    file_pattern: "app/**/*.py"
+    pattern: "storage\.googleapis|Blob\(|upload_from"
+    required: true
+    description: "Upload de imagem para GCS está FORA DE ESCOPO nesta ticket — se aparecer, é scope creep."
+
+  - id: soft_delete
+    type: file_contains
+    file_pattern: "app/**/*.py"
+    pattern: "ativo"
+    required: true
+    description: "Delete deve ser lógico (campo booleano 'ativo'), nunca remoção física do documento."
+
+  - id: sem_todo_placeholder
+    type: file_absent
+    file_pattern: "app/**/*.py"
+    pattern: "TODO|pass  # implementar"
+    required: true
+    description: "Ticket exige zero placeholders — nenhum TODO ou 'implementar depois' no código entregue."
+
+  - id: cobertura_minima
+    type: pytest_coverage
+    min_percent: 90
+    description: "Cobertura de teste mínima de 90% exigida na ticket."
+
+  - id: regra_unico_preco_b2c_obrigatorio
+    type: manual_review
+    description: "Verificar manualmente: todo produto deve ter exatamente 1 preço B2C definido (regra de negócio #1) — não é checável por regex simples, exige ler a lógica de validação."
+
+  - id: regra_margem_maior_igual_100
+    type: manual_review
+    description: "Verificar manualmente: quando existir preço B2B, margem_minima_revenda_pct deve ser >= 100.0 e a validação deve REJEITAR valores menores (regra de negócio #2) — regex acha o campo, mas não confirma que a regra de rejeição está correta."
