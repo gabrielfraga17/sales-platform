@@ -1,0 +1,80 @@
+ticket: TASK-0002
+descricao: "Checklist de conformidade do módulo de Carrinho — gerado junto com a ticket original, não depois."
+
+checks:
+  - id: sem_chamada_http_entre_modulos
+    type: file_absent
+    file_pattern: "app/**/*.py"
+    pattern: "requests\\.(get|post)|httpx\\.(get|post|AsyncClient)\\(.*carrinho|CATALOG_SERVICE_URL"
+    required: true
+    description: "Carrinho deve consultar preço/estoque via função Python direta, não HTTP entre serviços internos."
+
+  - id: modelo_item_carrinho
+    type: file_contains
+    file_pattern: "app/models/*.py"
+    pattern: "class ItemCarrinho"
+    required: true
+    description: "Modelo ItemCarrinho deve existir conforme contrato da ticket."
+
+  - id: modelo_carrinho
+    type: file_contains
+    file_pattern: "app/models/*.py"
+    pattern: "class Carrinho"
+    required: true
+    description: "Modelo Carrinho deve existir conforme contrato da ticket."
+
+  - id: modelo_elegibilidade
+    type: file_contains
+    file_pattern: "app/models/*.py"
+    pattern: "class ElegibilidadeCheckout"
+    required: true
+    description: "Modelo de resposta de elegibilidade de checkout deve existir."
+
+  - id: endpoint_criar_carrinho
+    type: file_contains
+    file_pattern: "app/routers/*.py"
+    pattern: "\"/carrinhos\""
+    required: true
+    description: "Endpoint POST /carrinhos deve existir."
+
+  - id: endpoint_adicionar_item
+    type: file_contains
+    file_pattern: "app/routers/*.py"
+    pattern: "/itens"
+    required: true
+    description: "Endpoints de item do carrinho (/carrinhos/{id}/itens) devem existir."
+
+  - id: endpoint_elegibilidade
+    type: file_contains
+    file_pattern: "app/routers/*.py"
+    pattern: "elegibilidade-checkout"
+    required: true
+    description: "Endpoint GET /carrinhos/{id}/elegibilidade-checkout deve existir."
+
+  - id: sem_preco_aceito_do_cliente
+    type: manual_review
+    description: "Verificar manualmente: o endpoint de adicionar item deve ignorar qualquer preço enviado no corpo da requisição e buscar o preço real via product_service — não é checável por regex."
+
+  - id: regra_moq_b2b_350
+    type: manual_review
+    description: "Verificar manualmente: elegibilidade de checkout para tipo_cliente=B2B deve exigir total >= 350.00, e B2C não deve ter essa exigência — checar a lógica condicional, não apenas presença do número 350."
+
+  - id: regra_soma_quantidade_item_existente
+    type: manual_review
+    description: "Verificar manualmente: adicionar o mesmo sku_variacao duas vezes deve somar quantidade, não duplicar linha — exige ler a lógica de adição, não é checável por regex."
+
+  - id: regra_validacao_estoque_sem_decremento
+    type: manual_review
+    description: "Verificar manualmente: adição de item deve validar contra estoque_disponivel (rejeitar se exceder) mas NÃO decrementar o estoque real — checar que não há write de estoque no repositório do Catálogo a partir do Carrinho."
+
+  - id: sem_todo_placeholder
+    type: file_absent
+    file_pattern: "app/**/*.py"
+    pattern: "TODO|pass  # implementar"
+    required: true
+    description: "Nenhum placeholder ou TODO no código entregue."
+
+  - id: cobertura_minima
+    type: pytest_coverage
+    min_percent: 90
+    description: "Cobertura de teste mínima de 90% do pacote app/ inteiro, incluindo o que já existe do Catálogo."
