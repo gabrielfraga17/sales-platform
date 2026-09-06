@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.routers.cart_router import router as cart_router
 from app.routers.product_router import router as product_router
 
 # Configuração de logging estruturado padrão Python
@@ -21,8 +22,9 @@ app = FastAPI(
     description="API de Catálogo de Produtos e Vendas (B2C & B2B) para a Sales Platform.",
 )
 
-# Registra as rotas do produto
+# Registra os roteadores da aplicação
 app.include_router(product_router)
+app.include_router(cart_router)
 
 
 @app.exception_handler(RequestValidationError)

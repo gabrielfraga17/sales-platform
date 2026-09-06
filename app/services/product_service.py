@@ -135,3 +135,17 @@ class ProductService:
         raise PriceNotAvailableError(
             f"Preço para tipo de cliente '{tipo_cliente.value}' não está configurado para este produto."
         )
+
+    def obter_preco_produto(self, produto_id: str, tipo_cliente: TipoCliente) -> float:
+        """Retorna o valor do preço unitário de um produto para um tipo de cliente especifico."""
+        preco_obj = self.get_product_price(produto_id, tipo_cliente)
+        return preco_obj.preco_unitario
+
+    def obter_estoque_variacao(self, produto_id: str, sku_variacao: str) -> int:
+        """Retorna o estoque disponível de uma variação específica de um produto."""
+        produto = self.get_product(produto_id)
+        for var in produto.variacoes:
+            if var.sku_variacao == sku_variacao:
+                return var.estoque_disponivel
+        raise ProductNotFoundError(f"Variação com SKU '{sku_variacao}' não encontrada no produto '{produto_id}'.")
+
