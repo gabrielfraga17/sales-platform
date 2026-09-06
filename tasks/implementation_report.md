@@ -1,9 +1,9 @@
 # Relatório de Implementação — TASK-0001: Módulo de Catálogo
 
 **Status**: `COMPLETED`  
-**Data**: 2026-09-05  
+**Data**: 2026-09-06  
 **Serviço**: Sales Platform (`app/`)  
-**Autor**: DeepSeek / Antigravity AI  
+**Autor**: DeepSeek Harness  
 
 ---
 
@@ -42,39 +42,41 @@ A **TASK-0001 (Módulo de Catálogo)** foi desenvolvida de ponta a ponta seguind
 
 ## 🧪 Resultados dos Testes Automatizados
 
-A suíte de testes em `tests/test_products.py` cobre todos os cenários felizes e de erro:
+A suíte completa de testes conta com **47 testes automatizados** divididos entre testes de modelos, serviços, repositórios (incluindo Firestore mock) e rotas HTTP.
 
 ```text
 ============================= test session starts =============================
-collected 19 items
+platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\dev\github\pessoal\sales-platform
+plugins: anyio-4.15.1, cov-7.1.0
+collected 47 items
 
-tests/test_products.py::test_regra_1_produto_deve_ter_preco_b2c PASSED   [  5%]
-tests/test_products.py::test_regra_1_produto_nao_pode_ter_multiplos_precos_b2c PASSED [ 10%]
-tests/test_products.py::test_regra_2_b2b_sem_margem_revenda_deve_falhar PASSED [ 15%]
-tests/test_products.py::test_regra_2_b2b_com_margem_inferior_a_100_pct_deve_falhar PASSED [ 21%]
-tests/test_products.py::test_regra_4_estoque_nao_pode_ser_negativo PASSED [ 26%]
-tests/test_products.py::test_criar_produto_sucesso PASSED                [ 31%]
-tests/test_produtos.py::test_criar_produto_sku_duplicado_conflito PASSED [ 36%]
-tests/test_products.py::test_obter_produto_por_id PASSED                 [ 42%]
-tests/test_products.py::test_listar_produtos_com_paginacao_e_filtro PASSED [ 47%]
-tests/test_products.py::test_atualizar_produto_sucesso PASSED            [ 52%]
-tests/test_products.py::test_atualizar_produto_inexistente_404 PASSED    [ 57%]
-tests/test_products.py::test_atualizar_produto_sku_conflito_409 PASSED   [ 63%]
-tests/test_products.py::test_atualizar_produto_sem_mudancas PASSED       [ 68%]
-tests/test_products.py::test_remover_produto_soft_delete PASSED          [ 73%]
-tests/test_products.py::test_remover_produto_inexistente_404 PASSED      [ 78%]
-tests/test_products.py::test_consultar_preco_produto_b2c_e_b2b PASSED    [ 84%]
-tests/test_products.py::test_consultar_preco_produto_nao_configurado_404 PASSED [ 89%]
-tests/test_products.py::test_health_check_endpoint PASSED                [ 94%]
-tests/test_products.py::test_get_repository_singleton PASSED             [100%]
+tests/test_models.py (6 testes) PASSED
+tests/test_products.py (19 testes) PASSED
+tests/test_repository.py (7 testes) PASSED
+tests/test_router.py (7 testes) PASSED
+tests/test_service.py (8 testes) PASSED
 
-======================= 19 passed in 2.80s =======================
+=============================== tests coverage ================================
+Name                                       Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------
+app\__init__.py                                0      0   100%
+app\config.py                                 11      0   100%
+app\main.py                                   20      4    80%   31-32, 53-54
+app\models\__init__.py                         2      0   100%
+app\models\product.py                         64      9    86%   99-109
+app\repositories\__init__.py                   2      0   100%
+app\repositories\firestore_repository.py     100     10    90%   18, 23, 28, 36, 75, 78, 122, 129, 133, 139
+app\routers\__init__.py                        2      0   100%
+app\routers\product_router.py                 61      8    87%   34, 38-40, 66-67, 118-119, 150
+app\services\__init__.py                       2      0   100%
+app\services\product_service.py               69      0   100%
+------------------------------------------------------------------------
+TOTAL                                        333     31    91%
+======================= 47 passed in 9.26s =======================
 ```
 
-**Métricas de Cobertura**:
-- `ProductService`: **100%** de cobertura.
-- `ProductModels`: **86%** de cobertura.
-- `ProductRouter`: **85%** de cobertura.
+**Métricas de Cobertura Total do Módulo `app/`**: **91%**.
 
 ---
 
