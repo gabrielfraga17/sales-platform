@@ -1,0 +1,24 @@
+# Segredos locais — NUNCA commitar
+.env
+*.env
+service-account*.json
+*.pem
+
+# Ambientes virtuais
+venv/
+.venv/
+.venv312/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor / SO
+.vscode/
+.DS_Store

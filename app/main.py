@@ -3,6 +3,7 @@
 import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
@@ -20,6 +21,21 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description="API de Catálogo de Produtos e Vendas (B2C & B2B) para a Sales Platform.",
+)
+
+# CORS: necessário para que o frontend (ex.: página de produto Palhas
+# Douradas em React, rodando em outro domínio/porta) consiga consumir a
+# API diretamente do navegador. Em desenvolvimento (ENVIRONMENT != "production")
+# liberamos qualquer origem para facilitar testes locais. Em produção,
+# restringimos à lista explícita em ALLOWED_ORIGINS (settings) — atualize
+# essa lista assim que o domínio final da loja for definido, para não
+# deixar a API aberta a qualquer site.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Registra os roteadores da aplicação
