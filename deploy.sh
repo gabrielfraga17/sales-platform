@@ -33,7 +33,7 @@ SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount
 # mas o CORSMiddleware não aceita "*" junto com allow_credentials=True em
 # alguns browsers, então prefira já listar os domínios reais assim que
 # souber (ex.: Vercel/Netlify preview + domínio de produção).
-ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-*}"
+ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-https://palhas-douradas-frontend-337796419771.southamerica-east1.run.app}"
 
 echo "==> Configurando projeto ${PROJECT_ID}..."
 gcloud config set project "${PROJECT_ID}"
