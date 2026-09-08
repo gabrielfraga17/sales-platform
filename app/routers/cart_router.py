@@ -6,14 +6,24 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.models.cart import Carrinho, ElegibilidadeCheckout
+from app.models.order import FinalizarCheckoutRequest, Pedido
 from app.models.product import TipoCliente
 from app.repositories.cart_firestore_repository import BaseCartRepository, FirestoreCartRepository, InMemoryCartRepository
 from app.repositories.firestore_repository import BaseProductRepository, FirestoreProductRepository, InMemoryProductRepository
+from app.repositories.order_firestore_repository import BaseOrderRepository, FirestoreOrderRepository, InMemoryOrderRepository
 from app.services.cart_service import (
+    CartAlreadyFinalizedError,
     CartItemNotFoundError,
     CartNotFoundError,
     CartService,
     InsufficientStockError,
+)
+from app.services.order_service import (
+    CartAlreadyFinalizedError as OrderCartAlreadyFinalizedError,
+    CartNotEligibleError,
+    InvalidBuyerDataError,
+    OrderService,
+    StockCommitError,
 )
 from app.services.product_service import PriceNotAvailableError, ProductNotFoundError, ProductService
 from app.config import settings
@@ -39,19 +49,31 @@ class UpdateCartItemRequest(BaseModel):
 
 def get_cart_service() -> CartService:
     """Dependency injection para o CartService."""
-    if settings.USE_IN_MEMORY_REPO:
+    if settings.USE_IN_MEMORY_DB:
         # Usa repositórios em memória globais simples para desenvolvimento/teste
         if not hasattr(get_cart_service, "_cart_repo"):
             get_cart_service._cart_repo = InMemoryCartRepository()
-            get_cart_service._prod_repo = InMemoryProductRepository()
         cart_repo = get_cart_service._cart_repo
-        prod_repo = get_cart_service._prod_repo
+        from app.routers.product_router import get_repository
+        prod_repo = get_repository()
     else:
         cart_repo = FirestoreCartRepository()
         prod_repo = FirestoreProductRepository()
 
     product_service = ProductService(repository=prod_repo)
     return CartService(cart_repository=cart_repo, product_service=product_service)
+
+
+def get_order_service(cart_service: CartService = Depends(get_cart_service)) -> OrderService:
+    """Dependency injection para o OrderService."""
+    if settings.USE_IN_MEMORY_DB:
+        if not hasattr(get_order_service, "_order_repo"):
+            get_order_service._order_repo = InMemoryOrderRepository()
+        order_repo = get_order_service._order_repo
+    else:
+        order_repo = FirestoreOrderRepository()
+
+    return OrderService(order_repository=order_repo, cart_service=cart_service)
 
 
 @router.post("", response_model=Carrinho, status_code=status.HTTP_201_CREATED)
@@ -95,6 +117,8 @@ def adicionar_item_carrinho(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InsufficientStockError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except CartAlreadyFinalizedError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
 @router.put("/{carrinho_id}/itens/{sku_variacao}", response_model=Carrinho)
@@ -115,6 +139,8 @@ def atualizar_quantidade_item(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except InsufficientStockError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except CartAlreadyFinalizedError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
 @router.delete("/{carrinho_id}/itens/{sku_variacao}", response_model=Carrinho)
@@ -128,6 +154,8 @@ def remover_item_carrinho(
         return service.remove_item(carrinho_id=carrinho_id, sku_variacao=sku_variacao)
     except (CartNotFoundError, CartItemNotFoundError) as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except CartAlreadyFinalizedError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
 @router.get("/{carrinho_id}/elegibilidade-checkout", response_model=ElegibilidadeCheckout)
@@ -140,3 +168,22 @@ def verificar_elegibilidade_checkout(
         return service.check_checkout_eligibility(carrinho_id=carrinho_id)
     except CartNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/{carrinho_id}/finalizar-checkout", response_model=Pedido, status_code=status.HTTP_201_CREATED)
+def finalizar_checkout(
+    carrinho_id: str,
+    payload: FinalizarCheckoutRequest,
+    service: OrderService = Depends(get_order_service),
+) -> Pedido:
+    """Finaliza o checkout de um carrinho elegível, decrementando estoque e gerando um Pedido."""
+    try:
+        return service.finalizar_checkout(carrinho_id=carrinho_id, request=payload)
+    except CartNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (CartNotEligibleError, OrderCartAlreadyFinalizedError) as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except StockCommitError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"detail": str(e), "skus": e.skus})
+    except InvalidBuyerDataError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

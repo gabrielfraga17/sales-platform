@@ -30,6 +30,7 @@ class Carrinho(BaseModel):
     itens: List[ItemCarrinho] = Field(default_factory=list)
     criado_em: datetime
     atualizado_em: datetime
+    finalizado: bool = False
 
     @property
     def total(self) -> float:

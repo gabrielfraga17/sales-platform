@@ -34,6 +34,7 @@ class ProductService:
 
     def __init__(self, repository: BaseProductRepository) -> None:
         self.repository = repository
+        self.product_repository = repository
 
     def create_product(self, payload: ProdutoCreate) -> Produto:
         """

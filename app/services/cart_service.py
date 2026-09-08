@@ -18,6 +18,12 @@ class CartNotFoundError(Exception):
     pass
 
 
+class CartAlreadyFinalizedError(Exception):
+    """Exceção para quando o carrinho já tiver sido finalizado."""
+
+    pass
+
+
 class CartItemNotFoundError(Exception):
     """Exceção para quando um item/variação não for encontrado no carrinho."""
 
@@ -64,6 +70,8 @@ class CartService:
     def add_item(self, carrinho_id: str, produto_id: str, sku_variacao: str, quantidade: int) -> Carrinho:
         """Adiciona um item ao carrinho ou incrementa sua quantidade se já existir."""
         carrinho = self.get_cart(carrinho_id)
+        if carrinho.finalizado:
+            raise CartAlreadyFinalizedError(f"Não é possível alterar o carrinho '{carrinho_id}' pois ele já foi finalizado.")
 
         # Valida existência do produto e variação, e obtém preço e estoque
         produto = self.product_service.get_product(produto_id)
@@ -119,6 +127,8 @@ class CartService:
         Se quantidade == 0, remove o item.
         """
         carrinho = self.get_cart(carrinho_id)
+        if carrinho.finalizado:
+            raise CartAlreadyFinalizedError(f"Não é possível alterar o carrinho '{carrinho_id}' pois ele já foi finalizado.")
 
         item_existente = next((item for item in carrinho.itens if item.sku_variacao == sku_variacao), None)
         if not item_existente:
@@ -153,6 +163,8 @@ class CartService:
     def remove_item(self, carrinho_id: str, sku_variacao: str) -> Carrinho:
         """Remove um item do carrinho."""
         carrinho = self.get_cart(carrinho_id)
+        if carrinho.finalizado:
+            raise CartAlreadyFinalizedError(f"Não é possível alterar o carrinho '{carrinho_id}' pois ele já foi finalizado.")
 
         item_existente = next((item for item in carrinho.itens if item.sku_variacao == sku_variacao), None)
         if not item_existente:
